@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+
+  <script src="js/easeljs-0.6.1.min.js"></script>
+  <script src="../lib/easeljs.tm-min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var stage = new createjs.Stage('stage');
+      var graphics = new createjs.tm.Graphics();
+      var shape = new createjs.Shape(graphics);
+      stage.addChild(shape);
+
+      setTimeout(function () {
+        var t = new Date().getTime();
+        shape.graphics.perlineNoise(0, 0, 256, 256, 0, 0, 5, 100);
+        console.log('time:', new Date().getTime() - t);
+        stage.update();
+      }, 1000);
+    }, false);
+  </script>
+</head>
+<body>
+
+<canvas id="stage" width="512" height="512"></canvas>
+
+</body>
+</html>
