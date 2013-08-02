@@ -14,13 +14,13 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var stage = new createjs.Stage('stage');
-      var graphics = new createjs.tm.Graphics();
-      var shape = new createjs.Shape(graphics);
-      stage.addChild(shape);
+      var bitmapData = new createjs.tm.BitmapData(256, 256);
+      var bitmap = new createjs.tm.Bitmap(bitmapData);
+      stage.addChild(bitmap);
 
       setTimeout(function () {
         var t = new Date().getTime();
-        shape.graphics.perlineNoise(0, 0, 128, 128, 0, 0, 6, 100);
+        bitmapData.perlinNoise(0, 0, 256, 256, 0, 0, 6, 100, null, null, 7, false, []);
         console.log('time:', new Date().getTime() - t);
         stage.update();
       }, 1000);

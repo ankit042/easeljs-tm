@@ -15,13 +15,28 @@ if module?.exports?
   createjs = module.exports.createjs
 ___extend createjs, {"tm":{}}
 
-class createjs.tm.Graphics extends createjs.Graphics
+class createjs.tm.Bitmap extends createjs.Bitmap
+
+  constructor: (bitmapData) ->
+    if bitmapData instanceof createjs.tm.BitmapData
+      return @initialize bitmapData.canvas
+    @initialize bitmapData
+
+
+class createjs.tm.BitmapData
 
   { Stage, Container, Shape } = createjs
 
 
-  constructor: ->
-    super()
+  isNumber = (obj) ->
+    Object::toString.call(obj) is '[object Number]'
+
+
+  constructor: (width, height) ->
+    @canvas = document.createElement 'canvas'
+    @canvas.width = width
+    @canvas.height = height
+    @ctx = @canvas.getContext '2d'
 
   noise: (x, y, width, height, randomSeed, low = 0, high = 255, channelOptions = 7, grayScale = false, offset = { x: 0, y: 0 }) ->
     @_updatePixels x, y, width, height, @_noise width, height, randomSeed, low, high, channelOptions, grayScale, offset
@@ -31,13 +46,13 @@ class createjs.tm.Graphics extends createjs.Graphics
     levelMin = Math.min low, high
     levelRange = Math.abs low - high
 
-    xor128 = new Xor128 (randomSeed % 0xff) << 24 | (x % 0xfff) << 12 | y % 0xfff
+    xor128 = new createjs.tm.Xor128 (randomSeed % 0xff) << 24 | (x % 0xfff) << 12 | y % 0xfff
 
     pixels = []
     i = 0
     if grayScale
-      for dy in [0...height] by 1
-        for dx in [0...width] by 1
+      for dy in [ 0...height ] by 1
+        for dx in [ 0...width ] by 1
           r = g = b = levelMin + xor128.random() % levelRange
           a = 0xff
           pixels[i++] = r
@@ -45,8 +60,8 @@ class createjs.tm.Graphics extends createjs.Graphics
           pixels[i++] = b
           pixels[i++] = a
     else
-      for dx in [0...width] by 1
-        for dy in [0...height] by 1
+      for dx in [ 0...width ] by 1
+        for dy in [ 0...height ] by 1
           r = levelMin + xor128.random() % levelRange
           g = levelMin + xor128.random() % levelRange
           b = levelMin + xor128.random() % levelRange
@@ -58,11 +73,11 @@ class createjs.tm.Graphics extends createjs.Graphics
     pixels
 
 
-  perlineNoise: (x, y, width, height, baseX, baseY, numOctaves, randomSeed, stitch, fractalNoise, channelOptions = 7, grayScale = false, offsets = []) ->
-    @_updatePixels x, y, width, height, @_perlineNoise width, height, baseX, baseY, numOctaves, randomSeed, stitch, fractalNoise, channelOptions, grayScale, offsets
+  perlinNoise: (x, y, width, height, baseX, baseY, numOctaves, randomSeed, stitch, fractalNoise, channelOptions = 7, grayScale = false, offsets = []) ->
+    @_updatePixels x, y, width, height, @_perlinNoise width, height, baseX, baseY, numOctaves, randomSeed, stitch, fractalNoise, channelOptions, grayScale, offsets
     @
 
-  _perlineNoise: (width, height, baseX, baseY, numOctaves, randomSeed, stitch, fractalNoise, channelOptions = 7, grayScale = false, offsets = []) ->
+  _perlinNoise: (width, height, baseX, baseY, numOctaves, randomSeed, stitch, fractalNoise, channelOptions = 7, grayScale = false, offsets = []) ->
     octaves = []
 
     persistences = []
@@ -75,7 +90,6 @@ class createjs.tm.Graphics extends createjs.Graphics
     for persistence, i in persistences
       persistences[i] *= k
 
-    gaussianFilter = new createjs.tm.GaussianFilter 2, 2, 1
     for i in [ 0...numOctaves ] by 1
       offset = offsets[i]
 
@@ -84,13 +98,12 @@ class createjs.tm.Graphics extends createjs.Graphics
       h = Math.ceil height / scale
       pixels = @_noise w, h, randomSeed, 0, 0xff, channelOptions, grayScale, offset
       pixels = @_scale pixels, w, h, width, height, i
-      pixels = gaussianFilter.filter width, height, pixels
-      if i is 5
-        return pixels
+      if i isnt 0
+        pixels = new createjs.tm.GaussianFilter(1 << i, 1 << i, i).filter width, height, pixels
 
       octaves[i] = octave =
         persistence: persistences[i]
-        pixels : pixels
+        pixels     : pixels
 
     targetPixels = []
     for persistence, i in persistences
@@ -110,8 +123,8 @@ class createjs.tm.Graphics extends createjs.Graphics
 
     dst = []
     j = 0
-    for y in [0...height]
-      for x in [0...width]
+    for y in [ 0...height ]
+      for x in [ 0...width ]
         k = w * (y >> i) + (x >> i) << 2
         dst[j++] = pixels[k++]
         dst[j++] = pixels[k++]
@@ -121,15 +134,15 @@ class createjs.tm.Graphics extends createjs.Graphics
 
 
   _updatePixels: (x, y, width, height, pixels) ->
-    i = 0
-    for dx in [ 0...width ]
-      for dy in [ 0...height ]
-        r = pixels[i++]
-        g = pixels[i++]
-        b = pixels[i++]
-        a = pixels[i++]
-        @beginFill Graphics.getRGB r, g, b, a
-        @drawRect x + dx, y + dy, 1, 1
+    {data} = imageData = @ctx.getImageData 0, 0, @canvas.width, @canvas.height
+    for pixel, i in pixels
+      data[i] = pixel
+    @ctx.putImageData imageData, 0, 0
+
+
+#    i = 0
+#    for pixel, i in pixels
+#      data[i] = pixel
 
 
 class createjs.tm.KernelFilter extends createjs.Filter
@@ -185,6 +198,7 @@ class createjs.tm.KernelFilter extends createjs.Filter
         targetPixels[++pixelIndex] = g & 0xff
         targetPixels[++pixelIndex] = b & 0xff
         targetPixels[++pixelIndex] = pixels[pixelIndex]
+    targetPixels
 
   clone: ->
     new KernelFilter @radiusX, @radiusY, @kernel
@@ -214,3 +228,19 @@ class createjs.tm.GaussianFilter extends createjs.tm.KernelFilter
 
   toString: ->
     '[GaussianBlurFilter]'
+
+
+class createjs.tm.Xor128
+
+  constructor: (w = 88675123) ->
+    @x = 123456789
+    @y = 362436069
+    @z = 521288629
+    @w = w % 0xffffffff
+
+  random: ->
+    t = @x ^ (@x << 11)
+    @x = @y
+    @y = @z
+    @z = @w
+    @w = (@w ^ (@w >> 19)) ^ (t ^ (t >> 8))

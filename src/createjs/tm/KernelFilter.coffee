@@ -23,7 +23,7 @@ class createjs.tm.KernelFilter extends createjs.Filter
     targetCtx.putImageData targetImageData, targetX, targetY
     true
 
-  filter: (width, height, pixels, targetPixels) ->
+  filter: (width, height, pixels, targetPixels = []) ->
     kernel = @kernel
     rx = @radiusX - 1
     ry = @radiusY - 1
@@ -51,6 +51,7 @@ class createjs.tm.KernelFilter extends createjs.Filter
         targetPixels[++pixelIndex] = g & 0xff
         targetPixels[++pixelIndex] = b & 0xff
         targetPixels[++pixelIndex] = pixels[pixelIndex]
+    targetPixels
 
   clone: ->
     new KernelFilter @radiusX, @radiusY, @kernel

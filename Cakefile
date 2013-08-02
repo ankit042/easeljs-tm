@@ -16,7 +16,7 @@ task 'uglify', 'compile with coffeemill', ({output}) ->
 task 'full', 'compile with coffeemill', ({output}) ->
   outputs = [ 'lib' ]
   outputs.push output if output?
-  coffeemill = spawn '../coffeemill/bin/coffeemill', [
+  coffeemill = spawn 'coffeemill', [
     '-i', 'src'
     '-o', outputs.join(',')
     '-n', 'easeljs.tm'

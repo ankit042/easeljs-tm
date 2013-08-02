@@ -4,18 +4,17 @@
   <title></title>
 
   <script src="js/easeljs-0.6.1.min.js"></script>
-  <script src="../lib/easeljs.tm-min.js"></script>
+  <script src="../lib/easeljs.tm.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var stage = new createjs.Stage('stage');
-      var graphics = new createjs.tm.Graphics();
-      var shape = new createjs.Shape(graphics);
-      stage.addChild(shape);
-
+      var bitmapData = new createjs.tm.BitmapData(128, 128);
+      var bitmap = new createjs.tm.Bitmap(bitmapData);
+      stage.addChild(bitmap);
 
       setTimeout(function () {
         var t = new Date().getTime();
-        shape.graphics.noise(0, 0, 128, 128, 100, 0, 0xff, 7, true);
+        bitmapData.noise(0, 0, 128, 128, 100, 0, 0xff, 7, true);
         console.log('time:', new Date().getTime() - t);
         stage.update();
       }, 1000);
@@ -24,7 +23,7 @@
 </head>
 <body>
 
-<canvas id="stage" width="256" height="256"></canvas>
+<canvas id="stage" width="512" height="512"></canvas>
 
 </body>
 </html>
