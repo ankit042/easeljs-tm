@@ -19,21 +19,6 @@ class createjs.tm.Graphics extends createjs.Graphics
 
   { Stage, Container, Shape } = createjs
 
-  class Xor128
-
-    constructor: (w = 88675123) ->
-      @x = 123456789
-      @y = 362436069
-      @z = 521288629
-      @w = w % 0xffffffff
-
-    random: ->
-      t = @x ^ (@x << 11)
-      @x = @y
-      @y = @z
-      @z = @w
-      @w = (@w ^ (@w >> 19)) ^ (t ^ (t >> 8))
-
 
   constructor: ->
     super()
@@ -93,20 +78,23 @@ class createjs.tm.Graphics extends createjs.Graphics
     gaussianFilter = new createjs.tm.GaussianFilter 2, 2, 1
     for i in [ 0...numOctaves ] by 1
       offset = offsets[i]
-      octaves[i] = octave =
-        persistence: persistences[i]
-        pixels     : []
 
       scale = 1 << i
       w = Math.ceil width / scale
       h = Math.ceil height / scale
-      noisedPixels = @_noise w, h, randomSeed, 0, 0xff, channelOptions, grayScale, offset
-      scaledPixels = @_scale noisedPixels, w, h, width, height, i
-      gaussianFilter.filter width, height, scaledPixels, octave.pixels
+      pixels = @_noise w, h, randomSeed, 0, 0xff, channelOptions, grayScale, offset
+      pixels = @_scale pixels, w, h, width, height, i
+      pixels = gaussianFilter.filter width, height, pixels
+      if i is 5
+        return pixels
+
+      octaves[i] = octave =
+        persistence: persistences[i]
+        pixels : pixels
 
     targetPixels = []
     for persistence, i in persistences
-      {w, h, pixels} = octaves[i]
+      {pixels} = octaves[i]
       if i is 0
         for pixel, j in pixels
           targetPixels[j] = pixel * persistence
@@ -169,7 +157,7 @@ class createjs.tm.KernelFilter extends createjs.Filter
     targetCtx.putImageData targetImageData, targetX, targetY
     true
 
-  filter: (width, height, pixels, targetPixels) ->
+  filter: (width, height, pixels, targetPixels = []) ->
     kernel = @kernel
     rx = @radiusX - 1
     ry = @radiusY - 1
