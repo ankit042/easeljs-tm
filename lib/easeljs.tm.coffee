@@ -32,108 +32,121 @@ class createjs.tm.BitmapData
     Object::toString.call(obj) is '[object Number]'
 
 
+  @CHANNEL_RED  : parseInt '1000', 2
+  @CHANNEL_GREEN: parseInt '0100', 2
+  @CHANNEL_BLUE : parseInt '0010', 2
+  @CHANNEL_ALPHA: parseInt '0001', 2
+
+
   constructor: (width, height) ->
     @canvas = document.createElement 'canvas'
     @canvas.width = width
     @canvas.height = height
     @ctx = @canvas.getContext '2d'
 
-  noise: (x, y, width, height, randomSeed, low = 0, high = 255, channelOptions = 7, grayScale = false, offset = { x: 0, y: 0 }) ->
-    @_updatePixels x, y, width, height, @_noise width, height, randomSeed, low, high, channelOptions, grayScale, offset
+  noise: (baseX, baseY, randomSeed, low = 0, high = 255, channelOptions = 14, grayScale = false, offset = { x: 0, y: 0 }) ->
+    @_updatePixels @_noise baseX, baseY, randomSeed, low, high, channelOptions, grayScale, offset
     @
 
-  _noise: (width, height, randomSeed, low = 0, high = 255, channelOptions = 7, grayScale = false, {x, y} = { x: 0, y: 0 }) ->
+  _noise: (baseX, baseY, randomSeed, low = 0, high = 255, channelOptions = 14, grayScale = false, {x, y} = { x: 0, y: 0 }) ->
+    width = @canvas.width
+    height = @canvas.height
     levelMin = Math.min low, high
     levelRange = Math.abs low - high
+    rChannel = (channelOptions & BitmapData.CHANNEL_RED) / BitmapData.CHANNEL_RED
+    gChannel = (channelOptions & BitmapData.CHANNEL_GREEN) / BitmapData.CHANNEL_GREEN
+    bChannel = (channelOptions & BitmapData.CHANNEL_BLUE) / BitmapData.CHANNEL_BLUE
+    aChannel = (channelOptions & BitmapData.CHANNEL_ALPHA) / BitmapData.CHANNEL_ALPHA
 
-    xor128 = new createjs.tm.Xor128 (randomSeed % 0xff) << 24 | (x % 0xfff) << 12 | y % 0xfff
+    randColor = new createjs.tm.Xor128 randomSeed
 
     pixels = []
     i = 0
+    j = width * y + x
     if grayScale
-      for dy in [ 0...height ] by 1
-        for dx in [ 0...width ] by 1
-          r = g = b = levelMin + xor128.random() % levelRange
-          a = 0xff
-          pixels[i++] = r
-          pixels[i++] = g
-          pixels[i++] = b
-          pixels[i++] = a
+      for k in [ 0...width * height ] by 1
+        r = g = b = levelMin + randColor.at(j) % levelRange
+        j += 3
+        a = levelMin + randColor.at(j++) % levelRange
+        pixels[i++] = r * rChannel
+        pixels[i++] = g * gChannel
+        pixels[i++] = b * bChannel
+        pixels[i++] = 0xff - a * aChannel
     else
-      for dx in [ 0...width ] by 1
-        for dy in [ 0...height ] by 1
-          r = levelMin + xor128.random() % levelRange
-          g = levelMin + xor128.random() % levelRange
-          b = levelMin + xor128.random() % levelRange
-          a = 0xff
-          pixels[i++] = r
-          pixels[i++] = g
-          pixels[i++] = b
-          pixels[i++] = a
+      for k in [ 0...width * height ] by 1
+        r = levelMin + randColor.at(j++) % levelRange
+        g = levelMin + randColor.at(j++) % levelRange
+        b = levelMin + randColor.at(j++) % levelRange
+        a = 0xff
+        j++
+        pixels[i++] = r * rChannel
+        pixels[i++] = g * gChannel
+        pixels[i++] = b * bChannel
+        pixels[i++] = 0xff - a * aChannel
     pixels
 
 
-  perlinNoise: (x, y, width, height, baseX, baseY, numOctaves, randomSeed, stitch, fractalNoise, channelOptions = 7, grayScale = false, offsets = []) ->
-    @_updatePixels x, y, width, height, @_perlinNoise width, height, baseX, baseY, numOctaves, randomSeed, stitch, fractalNoise, channelOptions, grayScale, offsets
+  perlinNoise: (baseX, baseY, numOctaves, randomSeed, stitch, persistence = .5, channelOptions = 7, grayScale = false, offsets = []) ->
+    @_updatePixels @_perlinNoise baseX, baseY, numOctaves, randomSeed, stitch, persistence, channelOptions, grayScale, offsets
     @
 
-  _perlinNoise: (width, height, baseX, baseY, numOctaves, randomSeed, stitch, fractalNoise, channelOptions = 7, grayScale = false, offsets = []) ->
+  _perlinNoise: (baseX, baseY, numOctaves, randomSeed, stitch, persistence = .5, channelOptions = 7, grayScale = false, offsets = []) ->
+    width = @canvas.width
+    height = @canvas.height
+
     octaves = []
 
-    persistences = []
-    totalWeight = 0
-    for i in [ 0...numOctaves ] by 1
-      weight = 1 << i
-      persistences[i] = weight
-      totalWeight += weight
-    k = 1 / totalWeight
-    for persistence, i in persistences
-      persistences[i] *= k
+    factor = 0
+    for i in [0...numOctaves] by 1
+      frequency = 1 << i
+      amplitude = Math.pow persistence, i
+      octaves[i] =
+        offset   : offsets[i]
+        frequency: frequency
+        amplitude: amplitude
+        baseX    : baseX / frequency
+        baseY    : baseY / frequency
+      factor += amplitude
 
-    for i in [ 0...numOctaves ] by 1
-      offset = offsets[i]
+    factor = 1 / factor
 
-      scale = 1 << i
-      w = Math.ceil width / scale
-      h = Math.ceil height / scale
-      pixels = @_noise w, h, randomSeed, 0, 0xff, channelOptions, grayScale, offset
-      pixels = @_scale pixels, w, h, width, height, i
-      if i isnt 0
-        pixels = new createjs.tm.GaussianFilter(1 << i, 1 << i, i).filter width, height, pixels
+    for octave in octaves
+      octave.amplitude *= factor
 
-      octaves[i] = octave =
-        persistence: persistences[i]
-        pixels     : pixels
+    for octave, i in octaves
+      { offset, baseX, baseY } = octave
+      pixels = @_noise baseX, baseY, randomSeed, 0, 0xff, channelOptions, grayScale, offset
+#      pixels = @_scale pixels, scaleX, scaleY
+#      pixels = new createjs.tm.GaussianFilter(1 << i, 1 << i, i).filter width, height, pixels
+      octave.pixels = pixels
 
     targetPixels = []
-    for persistence, i in persistences
-      {pixels} = octaves[i]
-      if i is 0
-        for pixel, j in pixels
-          targetPixels[j] = pixel * persistence
-      else
-        for pixel, j in pixels
-          targetPixels[j] += pixel * persistence
+    for octave in octaves
+      { pixels, amplitude } = octave
+      for pixel, j in pixels
+        targetPixels[j] = (targetPixels[j] or 0) + pixel * amplitude
     for pixel, i in targetPixels
       targetPixels[i] = pixel & 0xff
     targetPixels
 
-  _scale: (pixels, w, h, width, height, i) ->
-    return pixels.slice() if i is 0
+  _scale: (pixels, scaleX, scaleY) ->
+    return pixels.slice() if scaleX is 1 and scaleY is 1
 
+    width = @canvas.width
+    height = @canvas.height
     dst = []
-    j = 0
-    for y in [ 0...height ]
-      for x in [ 0...width ]
-        k = w * (y >> i) + (x >> i) << 2
-        dst[j++] = pixels[k++]
-        dst[j++] = pixels[k++]
-        dst[j++] = pixels[k++]
-        dst[j++] = pixels[k++]
+    i = 0
+    for y in [ 0...height ] by 1
+      for x in [ 0...width ] by 1
+        j = width * (y / scaleY >> 0) + (x / scaleX >> 0) << 2
+        dst[i++] = pixels[j++]
+        dst[i++] = pixels[j++]
+        dst[i++] = pixels[j++]
+        dst[i++] = pixels[j++]
     dst
 
 
-  _updatePixels: (x, y, width, height, pixels) ->
+  _updatePixels: (pixels) ->
     {data} = imageData = @ctx.getImageData 0, 0, @canvas.width, @canvas.height
     for pixel, i in pixels
       data[i] = pixel
@@ -232,11 +245,17 @@ class createjs.tm.GaussianFilter extends createjs.tm.KernelFilter
 
 class createjs.tm.Xor128
 
-  constructor: (w = 88675123) ->
+  constructor: (@w = 88675123) ->
     @x = 123456789
     @y = 362436069
     @z = 521288629
-    @w = w % 0xffffffff
+    @w &= 0xffffffff
+    @cache = []
+
+  at: (index) ->
+    while @cache.length <= index
+      @random()
+    @cache[index]
 
   random: ->
     t = @x ^ (@x << 11)
@@ -244,3 +263,5 @@ class createjs.tm.Xor128
     @y = @z
     @z = @w
     @w = (@w ^ (@w >> 19)) ^ (t ^ (t >> 8))
+    @cache.push @w
+    @w

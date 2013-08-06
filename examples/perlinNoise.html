@@ -14,13 +14,17 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var stage = new createjs.Stage('stage');
-      var bitmapData = new createjs.tm.BitmapData(256, 256);
+      var bitmapData = new createjs.tm.BitmapData(128, 128);
       var bitmap = new createjs.tm.Bitmap(bitmapData);
       stage.addChild(bitmap);
 
-      setTimeout(function () {
+      var offsets = [];
+      offsets[0] = {x: 0, y: 0};
+      offsets[1] = {x: 0, y: 0};
+      setInterval(function () {
         var t = new Date().getTime();
-        bitmapData.perlinNoise(0, 0, 256, 256, 0, 0, 6, 100, null, null, 7, false, []);
+        offsets[0].x += 1;
+        bitmapData.perlinNoise(128, 128, 1, 100, false, null, 7, false, offsets);
         console.log('time:', new Date().getTime() - t);
         stage.update();
       }, 1000);
