@@ -1,6 +1,6 @@
 class createjs.tm.GaussianFilter extends createjs.tm.KernelFilter
 
-  constructor: (radiusX, radiusY, sigma = 1) ->
+  constructor: (radiusX = 2, radiusY = 2, sigma = 1) ->
     s = 2 * sigma * sigma
     weight = 0
     kernel = []

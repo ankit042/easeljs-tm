@@ -19,53 +19,54 @@ class createjs.tm.BitmapData
     @canvas.height = height
     @ctx = @canvas.getContext '2d'
 
-  noise: (baseX, baseY, randomSeed, stitch = false, low = 0, high = 255, channelOptions = 14, grayScale = false, offset = { x: 0, y: 0 }) ->
-    @_updatePixels @_noise baseX, baseY, randomSeed, stitch, low, high, channelOptions, grayScale, offset
+  noise: (width, height, randomSeed = 88675123, stitch = false, low = 0, high = 255, channelOptions = 14, grayScale = false, offset = { x: 0, y: 0 }) ->
+    @_updatePixels @_noise width, height, randomSeed, stitch, low, high, channelOptions, grayScale, offset
     @
 
-  _noise: (baseX, baseY, randomSeed, stitch = false, low = 0, high = 255, channelOptions = 14, grayScale = false, {x, y} = { x: 0, y: 0 }) ->
-    width = @canvas.width
-    height = @canvas.height
-    levelMin = Math.min low, high
-    levelRange = Math.abs low - high
+  _noise: (width, height, randomSeed = 88675123, stitch = false, low = 0, high = 255, channelOptions = 14, grayScale = false, {x, y} = { x: 0, y: 0 }) ->
+    w = @canvas.width
+    h = @canvas.height
+    xor128 = new createjs.tm.Xor128 randomSeed
+    minLevel = Math.min low, high
+    rangeLevel = Math.abs low - high
     rChannel = (channelOptions & BitmapData.CHANNEL_RED) / BitmapData.CHANNEL_RED
     gChannel = (channelOptions & BitmapData.CHANNEL_GREEN) / BitmapData.CHANNEL_GREEN
     bChannel = (channelOptions & BitmapData.CHANNEL_BLUE) / BitmapData.CHANNEL_BLUE
     aChannel = (channelOptions & BitmapData.CHANNEL_ALPHA) / BitmapData.CHANNEL_ALPHA
 
-    xor128 = new createjs.tm.Xor128 randomSeed
-
-    pixels = []
-    i = 0
-    for k in [ 0...width * height ] by 1
-      dx = x + k % width >> 0
-      dy = y + k / width >> 0
+    colors = []
+    iColor = 0
+    for iPixel in [ 0...w * h ] by 1
+      dx = x + iPixel % w >> 0
+      dy = y + iPixel / w >> 0
+      dx = dx / width >> 0
+      dy = dy / height >> 0
       if stitch
-        dx %= width
-        dy %= height
-      j = dy * width + dx << 2
-      r = levelMin + xor128.at(j++) % levelRange
+        dx %= w
+        dy %= h
+      iLevel = dy * w + dx << 2
+      r = minLevel + xor128.at(iLevel++) % rangeLevel
       if grayScale
         g = b = r
-        j += 2
+        iLevel += 2
       else
-        g = levelMin + xor128.at(j++) % levelRange
-        b = levelMin + xor128.at(j++) % levelRange
-      a = levelMin + xor128.at(j++) % levelRange
-      pixels[i++] = r * rChannel
-      pixels[i++] = g * gChannel
-      pixels[i++] = b * bChannel
-      pixels[i++] = 0xff - a * aChannel
-    pixels
+        g = minLevel + xor128.at(iLevel++) % rangeLevel
+        b = minLevel + xor128.at(iLevel++) % rangeLevel
+      a = minLevel + xor128.at(iLevel++) % rangeLevel
+      colors[iColor++] = r * rChannel
+      colors[iColor++] = g * gChannel
+      colors[iColor++] = b * bChannel
+      colors[iColor++] = 0xff - a * aChannel
+    colors
 
 
-  perlinNoise: (baseX, baseY, numOctaves = 6, randomSeed = 88675123, stitch = false, persistence = .5, channelOptions = 7, grayScale = false, offsets = []) ->
-    @_updatePixels @_perlinNoise baseX, baseY, numOctaves, randomSeed, stitch, persistence, channelOptions, grayScale, offsets
+  perlinNoise: (width, height, numOctaves = 6, randomSeed = 88675123, stitch = false, persistence = .5, channelOptions = 7, grayScale = false, offsets = []) ->
+    @_updatePixels @_perlinNoise width, height, numOctaves, randomSeed, stitch, persistence, channelOptions, grayScale, offsets
     @
 
-  _perlinNoise: (baseX, baseY, numOctaves = 6, randomSeed = 88675123, stitch = false, persistence = .5, channelOptions = 7, grayScale = false, offsets = []) ->
-    width = @canvas.width
-    height = @canvas.height
+  _perlinNoise: (width, height, numOctaves = 6, randomSeed = 88675123, stitch = false, persistence = .5, channelOptions = 7, grayScale = false, offsets = []) ->
+    w = @canvas.width
+    h = @canvas.height
 
     octaves = []
 
@@ -77,8 +78,8 @@ class createjs.tm.BitmapData
         offset   : offsets[i]
         frequency: frequency
         amplitude: amplitude
-        baseX    : baseX / frequency
-        baseY    : baseY / frequency
+        baseX    : width / frequency
+        baseY    : height / frequency
       factor += amplitude
 
     factor = 1 / factor
