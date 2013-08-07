@@ -2,8 +2,31 @@
 <html>
 <head>
   <title></title>
+
+  <script src="js/easeljs-0.6.1.min.js"></script>
+  <script src="js/preloadjs-0.3.1.min.js"></script>
+  <script src="../lib/easeljs.tm-min.js"></script>
+  <script src="js/BoxBlurFilter.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var stage = new createjs.Stage('stage');
+      var preload = new createjs.LoadQueue();
+      preload.loadFile('images/lena_std.png');
+      preload.addEventListener('fileload', function (e) {
+        var bm = new createjs.Bitmap(e.result);
+        bm.filters = [
+          new createjs.tm.GaussianFilter(10, 10, 3)
+        ];
+        bm.cache(0, 0, 512, 512);
+        stage.addChild(bm);
+        stage.update();
+      });
+    }, false);
+  </script>
 </head>
 <body>
+
+<canvas id="stage" width="512" height="512"></canvas>
 
 </body>
 </html>

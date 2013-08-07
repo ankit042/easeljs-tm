@@ -189,27 +189,27 @@ class createjs.tm.KernelFilter extends createjs.Filter
     kernelWidth = rx + @radiusX
     kernelHeight = ry + @radiusY
 
-    for y in [0...height] by 1
-      for x in [0...width] by 1
-        r = g = b = 0
-        for kx in [0...kernelWidth] by 1
-          for ky in [0...kernelHeight] by 1
-            weight = kernel[kernelWidth * ky + kx]
+    for i in [0...width * height] by 1
+      x = i % width
+      y = i / width >> 0
+      r = g = b = 0
+      for kx in [0...kernelWidth] by 1
+        for ky in [0...kernelHeight] by 1
+          weight = kernel[kernelWidth * ky + kx]
+          px = x - rx + ky
+          px = if px < 0 then 0 else if px > width - 1 then width - 1 else px
+          py = y - ry + kx
+          py = if py < 0 then 0 else if py > height - 1 then height - 1 else py
+          pixelIndex = width * py + px << 2
+          r += pixels[pixelIndex++] * weight
+          g += pixels[pixelIndex++] * weight
+          b += pixels[pixelIndex] * weight
 
-            px = x - rx + ky
-            px = if px < 0 then 0 else if px > width - 1 then width - 1 else px
-            py = y - ry + kx
-            py = if py < 0 then 0 else if py > height - 1 then height - 1 else py
-            pixelIndex = width * py + px << 2
-            r += pixels[pixelIndex] * weight
-            g += pixels[++pixelIndex] * weight
-            b += pixels[++pixelIndex] * weight
-
-        pixelIndex = width * y + x << 2
-        targetPixels[pixelIndex] = r & 0xff
-        targetPixels[++pixelIndex] = g & 0xff
-        targetPixels[++pixelIndex] = b & 0xff
-        targetPixels[++pixelIndex] = pixels[pixelIndex]
+      pixelIndex = width * y + x << 2
+      targetPixels[pixelIndex++] = r & 0xff
+      targetPixels[pixelIndex++] = g & 0xff
+      targetPixels[pixelIndex++] = b & 0xff
+      targetPixels[pixelIndex] = pixels[pixelIndex]
     targetPixels
 
   clone: ->
