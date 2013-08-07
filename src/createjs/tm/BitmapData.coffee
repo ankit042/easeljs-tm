@@ -19,11 +19,11 @@ class createjs.tm.BitmapData
     @canvas.height = height
     @ctx = @canvas.getContext '2d'
 
-  noise: (baseX, baseY, randomSeed, low = 0, high = 255, channelOptions = 14, grayScale = false, offset = { x: 0, y: 0 }) ->
-    @_updatePixels @_noise baseX, baseY, randomSeed, low, high, channelOptions, grayScale, offset
+  noise: (baseX, baseY, randomSeed, stitch = false, low = 0, high = 255, channelOptions = 14, grayScale = false, offset = { x: 0, y: 0 }) ->
+    @_updatePixels @_noise baseX, baseY, randomSeed, stitch, low, high, channelOptions, grayScale, offset
     @
 
-  _noise: (baseX, baseY, randomSeed, low = 0, high = 255, channelOptions = 14, grayScale = false, {x, y} = { x: 0, y: 0 }) ->
+  _noise: (baseX, baseY, randomSeed, stitch = false, low = 0, high = 255, channelOptions = 14, grayScale = false, {x, y} = { x: 0, y: 0 }) ->
     width = @canvas.width
     height = @canvas.height
     levelMin = Math.min low, high
@@ -33,39 +33,37 @@ class createjs.tm.BitmapData
     bChannel = (channelOptions & BitmapData.CHANNEL_BLUE) / BitmapData.CHANNEL_BLUE
     aChannel = (channelOptions & BitmapData.CHANNEL_ALPHA) / BitmapData.CHANNEL_ALPHA
 
-    randColor = new createjs.tm.Xor128 randomSeed
+    xor128 = new createjs.tm.Xor128 randomSeed
 
     pixels = []
     i = 0
-    j = width * y + x
-    if grayScale
-      for k in [ 0...width * height ] by 1
-        r = g = b = levelMin + randColor.at(j) % levelRange
-        j += 3
-        a = levelMin + randColor.at(j++) % levelRange
-        pixels[i++] = r * rChannel
-        pixels[i++] = g * gChannel
-        pixels[i++] = b * bChannel
-        pixels[i++] = 0xff - a * aChannel
-    else
-      for k in [ 0...width * height ] by 1
-        r = levelMin + randColor.at(j++) % levelRange
-        g = levelMin + randColor.at(j++) % levelRange
-        b = levelMin + randColor.at(j++) % levelRange
-        a = 0xff
-        j++
-        pixels[i++] = r * rChannel
-        pixels[i++] = g * gChannel
-        pixels[i++] = b * bChannel
-        pixels[i++] = 0xff - a * aChannel
+    for k in [ 0...width * height ] by 1
+      dx = x + k % width >> 0
+      dy = y + k / width >> 0
+      if stitch
+        dx %= width
+        dy %= height
+      j = dy * width + dx << 2
+      r = levelMin + xor128.at(j++) % levelRange
+      if grayScale
+        g = b = r
+        j += 2
+      else
+        g = levelMin + xor128.at(j++) % levelRange
+        b = levelMin + xor128.at(j++) % levelRange
+      a = levelMin + xor128.at(j++) % levelRange
+      pixels[i++] = r * rChannel
+      pixels[i++] = g * gChannel
+      pixels[i++] = b * bChannel
+      pixels[i++] = 0xff - a * aChannel
     pixels
 
 
-  perlinNoise: (baseX, baseY, numOctaves, randomSeed, stitch, persistence = .5, channelOptions = 7, grayScale = false, offsets = []) ->
+  perlinNoise: (baseX, baseY, numOctaves = 6, randomSeed = 88675123, stitch = false, persistence = .5, channelOptions = 7, grayScale = false, offsets = []) ->
     @_updatePixels @_perlinNoise baseX, baseY, numOctaves, randomSeed, stitch, persistence, channelOptions, grayScale, offsets
     @
 
-  _perlinNoise: (baseX, baseY, numOctaves, randomSeed, stitch, persistence = .5, channelOptions = 7, grayScale = false, offsets = []) ->
+  _perlinNoise: (baseX, baseY, numOctaves = 6, randomSeed = 88675123, stitch = false, persistence = .5, channelOptions = 7, grayScale = false, offsets = []) ->
     width = @canvas.width
     height = @canvas.height
 
@@ -90,7 +88,7 @@ class createjs.tm.BitmapData
 
     for octave, i in octaves
       { offset, baseX, baseY } = octave
-      pixels = @_noise baseX, baseY, randomSeed, 0, 0xff, channelOptions, grayScale, offset
+      pixels = @_noise baseX, baseY, randomSeed, stitch, 0, 0xff, channelOptions, grayScale, offset
 #      pixels = @_scale pixels, scaleX, scaleY
 #      pixels = new createjs.tm.GaussianFilter(1 << i, 1 << i, i).filter width, height, pixels
       octave.pixels = pixels

@@ -3,27 +3,28 @@
 <head>
   <title></title>
 
+  <style>
+    /*canvas {
+      background: black;
+    }*/
+  </style>
+
   <script src="js/easeljs-0.6.1.min.js"></script>
   <script src="../lib/easeljs.tm.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var stage = new createjs.Stage('stage');
-      var bitmapData = new createjs.tm.BitmapData(128, 128);
+      var bitmapData = new createjs.tm.BitmapData(256, 128);
       var bitmap = new createjs.tm.Bitmap(bitmapData);
       stage.addChild(bitmap);
 
-      bitmapData.noise(2, 2, 100, 0, 0xff, 14, true);
-      stage.update();
-
-//      var offset = {x: 0, y: 0};
-//      createjs.Ticker.addEventListener('tick', function () {
-////        var t = new Date().getTime();
-//        offset.x += 1;
-//        offset.y += 3;
-//        bitmapData.noise(2, 2, 100, 0, 0xff, 7, true, offset);
-////        console.log('time:', new Date().getTime() - t);
-//        stage.update();
-//      });
+      var offset = {x: 0, y: 0};
+      createjs.Ticker.addEventListener('tick', function () {
+        offset.x += 1;
+        offset.y += 2;
+        bitmapData.noise(2, 2, null, true, 0, 0xff, 14, true, offset);
+        stage.update();
+      });
     }, false);
   </script>
 </head>
