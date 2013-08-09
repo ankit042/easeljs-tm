@@ -20,6 +20,7 @@ class createjs.tm.RGB
   toString: ->
     "[RGB] #{@r}, #{@g}, #{@b}"
 
-  toCSSString: ->
+  toCSSString: (alpha) ->
     @normalize()
+    return "rgba(#{@r}, #{@g}, #{@b}, #{alpha})" if alpha?
     "rgb(#{@r}, #{@g}, #{@b})"

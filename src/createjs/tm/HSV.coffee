@@ -76,5 +76,5 @@ class createjs.tm.HSV
   toString: ->
     "[HSV] #{@h}, #{@s}, #{@v}"
 
-  toCSSString: ->
-    @toRGB().toCSSString()
+  toCSSString: (alpha) ->
+    @toRGB().toCSSString alpha
