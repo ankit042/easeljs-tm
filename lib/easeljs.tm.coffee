@@ -103,8 +103,8 @@ class createjs.tm.BitmapData
         offset   : offsets[i]
         frequency: frequency
         amplitude: amplitude
-        baseX    : width / frequency
-        baseY    : height / frequency
+        width    : width / frequency
+        height   : height / frequency
       factor += amplitude
 
     factor = 1 / factor
@@ -112,11 +112,9 @@ class createjs.tm.BitmapData
     for octave in octaves
       octave.amplitude *= factor
 
-    for octave, i in octaves
-      { offset, baseX, baseY } = octave
-      pixels = @_noise baseX, baseY, randomSeed, stitch, 0, 0xff, channelOptions, grayScale, offset
-#      pixels = @_scale pixels, scaleX, scaleY
-#      pixels = new createjs.tm.GaussianFilter(1 << i, 1 << i, i).filter width, height, pixels
+    for octave in octaves
+      pixels = @_noise octave.width, octave.height, randomSeed, stitch, 0, 0xff, channelOptions, grayScale, octave.offset
+      pixels = new createjs.tm.GaussianFilter(Math.max(octave.width, 10), Math.max(octave.height, 10), 8).filter w, h, pixels
       octave.pixels = pixels
 
     targetPixels = []
@@ -187,29 +185,28 @@ class createjs.tm.KernelFilter extends createjs.Filter
     rx = @radiusX - 1
     ry = @radiusY - 1
     kernelWidth = rx + @radiusX
-    kernelHeight = ry + @radiusY
 
     for i in [0...width * height] by 1
       x = i % width
       y = i / width >> 0
       r = g = b = 0
-      for kx in [0...kernelWidth] by 1
-        for ky in [0...kernelHeight] by 1
-          weight = kernel[kernelWidth * ky + kx]
-          px = x - rx + ky
-          px = if px < 0 then 0 else if px > width - 1 then width - 1 else px
-          py = y - ry + kx
-          py = if py < 0 then 0 else if py > height - 1 then height - 1 else py
-          pixelIndex = width * py + px << 2
-          r += pixels[pixelIndex++] * weight
-          g += pixels[pixelIndex++] * weight
-          b += pixels[pixelIndex] * weight
+      for weight, j in kernel by 1
+        kx = j % kernelWidth
+        ky = j / kernelWidth >> 0
+        px = x - rx + kx
+        px = if px < 0 then 0 else if px > width - 1 then width - 1 else px
+        py = y - ry + ky
+        py = if py < 0 then 0 else if py > height - 1 then height - 1 else py
+        pixelIndex = width * py + px << 2
+        r += pixels[pixelIndex] * weight
+        g += pixels[++pixelIndex] * weight
+        b += pixels[++pixelIndex] * weight
 
       pixelIndex = width * y + x << 2
-      targetPixels[pixelIndex++] = r & 0xff
-      targetPixels[pixelIndex++] = g & 0xff
-      targetPixels[pixelIndex++] = b & 0xff
-      targetPixels[pixelIndex] = pixels[pixelIndex]
+      targetPixels[pixelIndex] = r & 0xff
+      targetPixels[++pixelIndex] = g & 0xff
+      targetPixels[++pixelIndex] = b & 0xff
+      targetPixels[++pixelIndex] = pixels[pixelIndex]
     targetPixels
 
   clone: ->
@@ -221,17 +218,40 @@ class createjs.tm.KernelFilter extends createjs.Filter
 
 class createjs.tm.GaussianFilter extends createjs.tm.KernelFilter
 
-  constructor: (radiusX = 2, radiusY = 2, sigma = 1) ->
-    s = 2 * sigma * sigma
-    weight = 0
+#  SIGMA2_2 = Math.sqrt(-1/(2*Math.log(1/2)))
+
+  constructor: (radiusX = 2, radiusY = 2, sigma) ->
+    totalWeight = 0
     kernel = []
-    for dy in [1 - radiusY...radiusY] by 1
-      for dx in [1 - radiusX...radiusX] by 1
-        w = 1 / (s * Math.PI) * Math.exp(-(dx*dx+dy*dy)/s)
-        weight+=w
-        kernel.push w
-    for {}, i in kernel
-      kernel[i] /= weight
+    if sigma?
+      s = 2 * sigma * sigma
+      for y in [ 1 - radiusY...radiusY ] by 1
+        for x in [ 1 - radiusX...radiusX ] by 1
+          weight = 1 / (s * Math.PI) * Math.exp(-(x * x + y * y) / s)
+          totalWeight += weight
+          kernel.push weight
+    else
+      # Generate kernel with pascal's triangle
+      pascalTriangle = []
+      for n in [ 0...Math.max(radiusX, radiusY) * 2 - 1 ]
+        pascalTriangle[n] = current = []
+        prev = pascalTriangle[n - 1]
+        len = n + 1
+        for k in [ 0...len ]
+          if k is 0 or k is len - 1
+            current[k] = 1
+          else
+            current[k] = prev[k - 1] + prev[k]
+      weightXs = pascalTriangle[(radiusX - 1) * 2]
+      weightYs = pascalTriangle[(radiusY - 1) * 2]
+      for weightY in weightYs
+        for weightX in weightXs
+          weight = weightX * weightY
+          totalWeight += weight
+          kernel.push weight
+
+    for weight, i in kernel
+      kernel[i] /= totalWeight
     super radiusX, radiusY, kernel
 
   clone: ->
