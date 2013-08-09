@@ -14,7 +14,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var stage = new createjs.Stage('stage');
-      var bitmapData = new createjs.tm.BitmapData(257, 129);
+      var bitmapData = new createjs.tm.BitmapData(128, 128);
       var bitmap = new createjs.tm.Bitmap(bitmapData);
       stage.addChild(bitmap);
 
@@ -23,7 +23,7 @@
       createjs.Ticker.addEventListener('tick', function () {
         offset.x += 1;
         offset.y += 2;
-        bitmapData.noise(50, 50, null, true, 0, 0xff, 14, true, offset);
+        bitmapData.noise(128, 12, null, true, 0, 0xff, 14, true, offset);
         stage.update();
       });
     }, false);
