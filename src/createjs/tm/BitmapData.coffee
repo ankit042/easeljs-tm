@@ -78,8 +78,8 @@ class createjs.tm.BitmapData
         offset   : offsets[i]
         frequency: frequency
         amplitude: amplitude
-        baseX    : width / frequency
-        baseY    : height / frequency
+        width    : width / frequency
+        height   : height / frequency
       factor += amplitude
 
     factor = 1 / factor
@@ -87,11 +87,9 @@ class createjs.tm.BitmapData
     for octave in octaves
       octave.amplitude *= factor
 
-    for octave, i in octaves
-      { offset, baseX, baseY } = octave
-      pixels = @_noise baseX, baseY, randomSeed, stitch, 0, 0xff, channelOptions, grayScale, offset
-#      pixels = @_scale pixels, scaleX, scaleY
-#      pixels = new createjs.tm.GaussianFilter(1 << i, 1 << i, i).filter width, height, pixels
+    for octave in octaves
+      pixels = @_noise octave.width, octave.height, randomSeed, stitch, 0, 0xff, channelOptions, grayScale, octave.offset
+      pixels = new createjs.tm.GaussianFilter(Math.max(octave.width, 10), Math.max(octave.height, 10), 8).filter w, h, pixels
       octave.pixels = pixels
 
     targetPixels = []
