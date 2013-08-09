@@ -6,10 +6,14 @@ class createjs.tm.Graphics extends createjs.Graphics
 
   beginStroke: (r, g, b, a) ->
     if arguments.length is 1
-      return super.apply @, arguments
+      if Object::toString.call(r) is '[object Number]'
+        return super new createjs.tm.RGB(r).toCSSString()
+      return super r
     super Graphics.getRGB r, g, b, a
 
   beginFill: (r, g, b, a) ->
     if arguments.length is 1
-      return super.apply @, arguments
+      if Object::toString.call(r) is '[object Number]'
+        return super new createjs.tm.RGB(r).toCSSString()
+      return super r
     super Graphics.getRGB r, g, b, a
