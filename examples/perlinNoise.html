@@ -14,35 +14,40 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var stage = new createjs.Stage('stage');
-      var bitmapData = new createjs.tm.BitmapData(64, 64);
+      var bitmapData = new createjs.tm.BitmapData(256, 256);
       var bitmap = new createjs.tm.Bitmap(bitmapData);
       stage.addChild(bitmap);
 
-      var offsets = [];
-      offsets[0] = {x: 0, y: 0};
-      offsets[1] = {x: 0, y: 0};
-      offsets[2] = {x: 0, y: 0};
-      offsets[3] = {x: 0, y: 0};
-      offsets[4] = {x: 0, y: 0};
-      offsets[5] = {x: 0, y: 0};
-      createjs.Ticker.addEventListener('tick', function () {
-        var d = new Date().getTime();
-        bitmapData.perlinNoise(32, 32, 3, null, true, null, 14, false, offsets);
-        stage.update();
-        console.log(new Date().getTime() - d);
-        offsets[0].x += 1;
-        offsets[1].x += 1;
-        offsets[2].x += 2;
-        offsets[3].x += 2;
-        offsets[4].x += 3;
-        offsets[5].x += 3;
-      });
+      var d = new Date().getTime();
+      bitmapData.perlinNoise(32, 32, 6, null, false, null, 14, true, null);
+      stage.update();
+      console.log(new Date().getTime() - d);
+
+//      var offsets = [];
+//      offsets[0] = {x: 0, y: 0};
+//      offsets[1] = {x: 0, y: 0};
+//      offsets[2] = {x: 0, y: 0};
+//      offsets[3] = {x: 0, y: 0};
+//      offsets[4] = {x: 0, y: 0};
+//      offsets[5] = {x: 0, y: 0};
+//      createjs.Ticker.addEventListener('tick', function () {
+//        var d = new Date().getTime();
+//        bitmapData.perlinNoise(32, 32, 3, null, true, null, 14, false, offsets);
+//        stage.update();
+//        console.log(new Date().getTime() - d);
+//        offsets[0].x += 1;
+//        offsets[1].x += 1;
+//        offsets[2].x += 2;
+//        offsets[3].x += 2;
+//        offsets[4].x += 3;
+//        offsets[5].x += 3;
+//      });
     }, false);
   </script>
 </head>
 <body>
 
-<canvas id="stage" width="64" height="64" style="width:100%; height:100%"></canvas>
+<canvas id="stage" width="256" height="256"></canvas>
 
 </body>
 </html>
