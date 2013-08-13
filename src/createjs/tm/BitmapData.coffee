@@ -89,7 +89,7 @@ class createjs.tm.BitmapData
 
     for octave in octaves
       pixels = @_noise octave.width, octave.height, randomSeed, stitch, 0, 0xff, channelOptions, grayScale, octave.offset
-      pixels = new createjs.tm.GaussianFilter(Math.max(octave.width, 10), Math.max(octave.height, 10), 8).filter w, h, pixels
+      pixels = new createjs.tm.GaussianFilter(octave.width, octave.height, 8).filter w, h, pixels
       octave.pixels = pixels
 
     targetPixels = []
