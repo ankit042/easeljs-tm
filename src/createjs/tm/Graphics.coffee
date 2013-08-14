@@ -1,19 +1,25 @@
 class createjs.tm.Graphics extends createjs.Graphics
 
+  PI_OVER_2 = Math.PI / 2
+
+
   @getRGB: (r, g, b, a) ->
     super r >> 0, g >> 0, b >> 0, a
 
 
   beginStroke: (r, g, b, a) ->
-    if arguments.length is 1
-      if Object::toString.call(r) is '[object Number]'
-        return super new createjs.tm.RGB(r).toCSSString()
-      return super r
-    super Graphics.getRGB r, g, b, a
+    super new createjs.tm.RGB(r, g, b, a).toCSSString()
 
   beginFill: (r, g, b, a) ->
-    if arguments.length is 1
-      if Object::toString.call(r) is '[object Number]'
-        return super new createjs.tm.RGB(r).toCSSString()
-      return super r
-    super Graphics.getRGB r, g, b, a
+    super new createjs.tm.RGB(r, g, b, a).toCSSString()
+
+  beginRadialCircularGradientFill: (hsv0, hsv1, numInterpolate, x0, y0, r0, x1, y1, r1) ->
+    colors = []
+    ratios = []
+    unitAngle = PI_OVER_2 / numInterpolate
+    for i in [ 0..numInterpolate ] by 1
+      angle = unitAngle * i
+      colors[i] = createjs.tm.HSV.interpolate(hsv0, hsv1, 1 - Math.cos angle).toCSSString()
+      ratios[i] = Math.sin angle
+    @beginRadialGradientFill colors, ratios, x0, y0, r0, x1, y1, r1
+

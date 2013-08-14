@@ -2,12 +2,12 @@ class createjs.tm.HSV
 
   @interpolate: (a, b, t) ->
     hsv = new HSV
-    for key, i in ['h', 's', 'v']
+    for key in ['h', 's', 'v', 'a']
       hsv[key] = a[key] + (b[key] - a[key]) * t
     hsv.normalize()
 
 
-  constructor: (@h, @s, @v) ->
+  constructor: (@h, @s, @v, @a = 1) ->
     if arguments.length is 1
       hex = h
       rgb = new createjs.tm.RGB hex
@@ -43,16 +43,20 @@ class createjs.tm.HSV
       @v = v
     @normalize()
 
+  clone: ->
+    new HSV @h, @s, @v, @a
+
   normalize: ->
     @s = if @s < 0 then 0 else if @s > 1 then 1 else @s
     @v = if @v < 0 then 0 else if @v > 1 then 1 else @v
     @h = @h % 360
     @h += 360 if @h < 0
+    @a = if @a > 1 then 1 else if @a < 0 then 0 else @a
     @
 
   toRGB: ->
     @normalize()
-    {h, s, v} = @
+    {h, s, v, a} = @
     h /= 60
     i = h >> 0
     x = v * (1 - s)
@@ -63,18 +67,18 @@ class createjs.tm.HSV
     z = z * 0xff >> 0
     v = v * 0xff >> 0
     switch i
-      when 0 then new createjs.tm.RGB v, z, x
-      when 1 then new createjs.tm.RGB y, v, x
-      when 2 then new createjs.tm.RGB x, v, z
-      when 3 then new createjs.tm.RGB x, y, v
-      when 4 then new createjs.tm.RGB z, x, v
-      when 5 then new createjs.tm.RGB v, x, y
+      when 0 then new createjs.tm.RGB v, z, x, a
+      when 1 then new createjs.tm.RGB y, v, x, a
+      when 2 then new createjs.tm.RGB x, v, z, a
+      when 3 then new createjs.tm.RGB x, y, v, a
+      when 4 then new createjs.tm.RGB z, x, v, a
+      when 5 then new createjs.tm.RGB v, x, y, a
 
   toHex: ->
     @toRGB().toHex()
 
   toString: ->
-    "[HSV] #{@h}, #{@s}, #{@v}"
+    "[HSV] #{@h}, #{@s}, #{@v}, #{@a}"
 
-  toCSSString: (alpha) ->
-    @toRGB().toCSSString alpha
+  toCSSString: ->
+    @toRGB().toCSSString()
