@@ -3,6 +3,18 @@ class createjs.tm.RGB
   SMALL_NUMBER = Math.pow 10, -6
 
 
+  @interpolate: (a, b, t) ->
+    unless a instanceof RGB
+      a = new RGB a
+    unless b instanceof RGB
+      b = new RGB b
+
+    rgb = new RGB
+    for key in ['r', 'g', 'b', 'a']
+      rgb[key] = a[key] + (b[key] - a[key]) * t
+    rgb.normalize()
+
+
   ###
   ```CoffeeScript
   new RGB '#f00'
@@ -19,7 +31,38 @@ class createjs.tm.RGB
   ```
   ###
   constructor: (r, g, b, a) ->
-    if isNaN +r
+    unless @ instanceof RGB
+      rgb = new RGB
+      RGB.apply rgb, arguments
+      return rgb
+
+    return unless r?
+
+    if r instanceof RGB
+      @apply r
+      return
+
+    if r instanceof createjs.tm.HSV
+      { h, s, v, a } = r.clone().normalize()
+      h /= 60
+      i = h >> 0
+      x = v * (1 - s)
+      y = v * (1 - s * (h - 1))
+      z = v * (1 - s * (1 - h + i))
+      x = x * 0xff >> 0
+      y = y * 0xff >> 0
+      z = z * 0xff >> 0
+      v = v * 0xff >> 0
+      switch i
+        when 0 then @apply v, z, x, a
+        when 1 then @apply y, v, x, a
+        when 2 then @apply x, v, z, a
+        when 3 then @apply x, y, v, a
+        when 4 then @apply z, x, v, a
+        when 5 then @apply v, x, y, a
+      return
+
+    if Object::toString.call(r) is '[object String]'
       if $ = r.match /#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/
         @r = parseInt $[1], 16
         @g = parseInt $[2], 16
@@ -59,6 +102,14 @@ class createjs.tm.RGB
 
   clone: ->
     new RGB @r, @g, @b, @a
+
+  apply: (r, g, b, a) ->
+    if r instanceof RGB
+      { r, g, b, a } = r
+    @r = r
+    @g = g
+    @b = b
+    @a = a ? 1
 
   normalize: ->
     @r &= 0xff
