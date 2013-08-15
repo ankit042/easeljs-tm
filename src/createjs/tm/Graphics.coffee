@@ -8,10 +8,14 @@ class createjs.tm.Graphics extends createjs.Graphics
 
 
   beginStroke: (r, g, b, a) ->
-    super new createjs.tm.RGB(r, g, b, a).toCSSString()
+    rgb = new createjs.tm.RGB
+    createjs.tm.RGB.apply rgb, arguments
+    super rgb.toCSSString()
 
   beginFill: (r, g, b, a) ->
-    super new createjs.tm.RGB(r, g, b, a).toCSSString()
+    rgb = new createjs.tm.RGB
+    createjs.tm.RGB.apply rgb, arguments
+    super rgb.toCSSString()
 
   beginCircularGradientFill: (color0, color1, interpolationMethod,
     numInterpolate, x0, y0, r0, x1, y1, r1) ->

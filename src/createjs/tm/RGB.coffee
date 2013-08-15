@@ -36,8 +36,6 @@ class createjs.tm.RGB
       RGB.apply rgb, arguments
       return rgb
 
-    return unless r?
-
     if r instanceof RGB
       @apply r
       return
@@ -45,21 +43,22 @@ class createjs.tm.RGB
     if r instanceof createjs.tm.HSV
       { h, s, v, a } = r.clone().normalize()
       h /= 60
-      i = h >> 0
-      x = v * (1 - s)
-      y = v * (1 - s * (h - 1))
-      z = v * (1 - s * (1 - h + i))
-      x = x * 0xff >> 0
-      y = y * 0xff >> 0
-      z = z * 0xff >> 0
+      hi = h >> 0
+      f = h - hi
+      p = v * (1 - s)
+      q = v * (1 - f * s)
+      t = v * (1 - (1 - f) * s)
+      p = p * 0xff >> 0
+      q = q * 0xff >> 0
+      t = t * 0xff >> 0
       v = v * 0xff >> 0
-      switch i
-        when 0 then @apply v, z, x, a
-        when 1 then @apply y, v, x, a
-        when 2 then @apply x, v, z, a
-        when 3 then @apply x, y, v, a
-        when 4 then @apply z, x, v, a
-        when 5 then @apply v, x, y, a
+      switch hi
+        when 0 then @apply v, t, p, a
+        when 1 then @apply q, v, p, a
+        when 2 then @apply p, v, t, a
+        when 3 then @apply p, q, v, a
+        when 4 then @apply t, p, v, a
+        when 5 then @apply v, p, q, a
       return
 
     if Object::toString.call(r) is '[object String]'
@@ -68,37 +67,37 @@ class createjs.tm.RGB
         @g = parseInt $[2], 16
         @b = parseInt $[3], 16
         @a = g ? 1
-      else if $ = r.match /#([0-9a-f])([0-9a-f])([0-9a-f])/
+        return
+      if $ = r.match /#([0-9a-f])([0-9a-f])([0-9a-f])/
         @r = parseInt "#{$[1]}#{$[1]}", 16
         @g = parseInt "#{$[2]}#{$[2]}", 16
         @b = parseInt "#{$[3]}#{$[3]}", 16
         @a = g ? 1
-      else if $ = r.match /rgba\(\s*(\S+?)\s*,\s*(\S+?)\s*,\s*(\S+?)\s*,\s*(\S+?)\s*\)/
+        return
+      if $ = r.match /rgba\(\s*(\S+?)\s*,\s*(\S+?)\s*,\s*(\S+?)\s*,\s*(\S+?)\s*\)/
         @r = +$[1]
         @g = +$[2]
         @b = +$[3]
         @a = +$[4]
-      else if $ = r.match /rgb\(\s*(\S+?)\s*,\s*(\S+?)\s*,\s*(\S+?)\s*\)/
+        return
+      if $ = r.match /rgb\(\s*(\S+?)\s*,\s*(\S+?)\s*,\s*(\S+?)\s*\)/
         @r = +$[1]
         @g = +$[2]
         @b = +$[3]
-        @a = 1
-      else
-        throw new TypeError 'Invalid color string'
-    else
-      if r? and g? and b?
-        @r = r
-        @g = g
-        @b = b
-        @a = a ? 1
-      else if r?
+        @a = g ? 1
+        return
+
+    switch arguments.length
+      when 1, 2
         @r = r >> 16 & 0xff
         @g = r >> 8 & 0xff
         @b = r & 0xff
         @a = g ? 1
       else
-        throw new TypeError 'Invalid color number'
-    @normalize()
+        @r = r ? 0
+        @g = g ? 0
+        @b = b ? 0
+        @a = a ? 1
 
   clone: ->
     new RGB @r, @g, @b, @a

@@ -23,12 +23,10 @@ class createjs.tm.HSV
       @s = s ? 0
       @v = v ? 0
       @a = a ? 1
-      @normalize()
-      return
+      return @
 
     if h instanceof HSV
-      @apply h
-      return
+      return @apply h
 
     if h instanceof createjs.tm.RGB
       rgb = h
@@ -66,15 +64,17 @@ class createjs.tm.HSV
     @s = s
     @v = v
     @a = a
+    @
 
   clone: ->
     new HSV @h, @s, @v, @a
 
   apply: (hsv) ->
-    @h = hsv.h
-    @s = hsv.s
-    @v = hsv.v
-    @a = hsv.a ? 1
+    @h = hsv.h if hsv.h?
+    @s = hsv.s if hsv.s?
+    @v = hsv.v if hsv.v?
+    @a = hsv.a if hsv.a?
+    @
 
   normalize: ->
     @h = @h % 360
@@ -93,6 +93,9 @@ class createjs.tm.HSV
     else if @a > 1
       @a = 1
     @
+
+  equals: ({h, s, v, a}) ->
+    h is @h and s is @s and v is @v and a is @a
 
   toHex: ->
     createjs.tm.RGB(@).toHex()
