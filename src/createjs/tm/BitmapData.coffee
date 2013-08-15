@@ -1,8 +1,5 @@
 class createjs.tm.BitmapData
 
-  { Stage, Container, Shape } = createjs
-
-
   isNumber = (obj) ->
     Object::toString.call(obj) is '[object Number]'
 
@@ -14,10 +11,31 @@ class createjs.tm.BitmapData
 
 
   constructor: (width, height) ->
+    if !width? or !height?
+      throw new TypeError 'BitmapData#constructor requires 2 parameters'
     @canvas = document.createElement 'canvas'
     @canvas.width = width
     @canvas.height = height
     @ctx = @canvas.getContext '2d'
+
+  clear: ->
+    @ctx.setTransform 1, 0, 0, 1, 0, 0
+    @ctx.clearRect 0, 0, @canvas.width + 1 , @canvas.height + 1
+
+  resize: (width, height) ->
+    imageData = @ctx.getImageData 0, 0, width, height
+    @canvas.width = width
+    @canvas.height = height
+    @ctx.putImageData imageData, 0, 0
+
+  draw: (bitmapDrawable, args...) ->
+    unless bitmapDrawable instanceof HTMLImageElement or bitmapDrawable instanceof HTMLCanvasElement or bitmapDrawable instanceof HTMLVideoElement
+      if bitmapDrawable.canvas?
+        bitmapDrawable = bitmapDrawable.canvas
+      else
+        throw new TypeError 'draw requires drawable object'
+    args.unshift bitmapDrawable
+    @ctx.drawImage.apply @ctx, args
 
   noise: (width, height, randomSeed = 88675123, stitch = false, low = 0, high = 255, channelOptions = 14, grayScale = false, offset = { x: 0, y: 0 }) ->
     @_updatePixels @_noise width, height, randomSeed, stitch, low, high, channelOptions, grayScale, offset
