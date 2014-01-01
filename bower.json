@@ -1,13 +1,13 @@
 {
-  "name"    : "easeljs-tm",
-  "version" : "0.0.0",
+  "name": "easeljs-tm",
+  "version": "0.0.1",
   "homepage": "https://github.com/trymore/easeljs-tm",
-  "authors" : [
+  "authors": [
     "minodisk <daisuke.mino@gmail.com>"
   ],
-  "main"    : "lib/easeljs.tm.js",
-  "license" : "MIT",
-  "ignore"  : [
+  "main": "lib/easeljs.tm.js",
+  "license": "MIT",
+  "ignore": [
     "**/.*",
     "node_modules"
   ]
