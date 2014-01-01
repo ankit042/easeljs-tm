@@ -1,0 +1,27 @@
+{
+  "name"           : "easeljs-tm",
+  "version"        : "0.0.0",
+  "description"    : "Plugin for EaselJS",
+  "keywords"       : [],
+  "tags"           : [],
+  "author"         : {
+    "name" : "Daisuke Mino",
+    "email": "daisuke.mino@gmail.com"
+  },
+  "repository"     : {
+    "type": "git",
+    "url" : "https://github.com/trymore/easeljs-tm.git"
+  },
+  "engines"        : {},
+  "license"        : "MIT",
+  "main"           : "./lib/easeljs-tm",
+  "dependencies"   : {},
+  "devDependencies": {
+    "grunt"               : "~0.4.2",
+    "grunt-contrib-watch" : "~0.5.3",
+    "grunt-contrib-clean" : "~0.5.0",
+    "grunt-contrib-coffee": "~0.8.0",
+    "grunt-coffeemill"    : "0.0.9",
+    "grunt-release"       : "~0.6.0"
+  }
+}

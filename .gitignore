@@ -4,6 +4,9 @@
 # OS: Win
 Thumb.db
 
+# Environment: Node
+node_modules/
+
 # IDE: IntelliJ
 *.iml
 .idea/
@@ -12,9 +15,6 @@ Thumb.db
 .sass-cache
 
 # Compiler: ActionScript
-bin/
-bin-debug/
-bin-release/
 .settings/
 
 # File: Sound
