@@ -7,6 +7,9 @@ Thumb.db
 # Environment: Node
 node_modules/
 
+# Builder: Bower
+bower_components/
+
 # IDE: IntelliJ
 *.iml
 .idea/
